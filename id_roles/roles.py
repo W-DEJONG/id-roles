@@ -6,8 +6,11 @@ REGEX_ROLE_VALUE = r"^([a-zA-Z0-9\-\_,\.]*|\*)$"
 
 def split_role(role):
     """
-    Split a role string in the format `name[value,value]`
-    Returns a tuple with name and a list of values.
+    :param role: Role string with format "name[value,value]"
+    :type role: str
+    :returns: tuple with role name and a set of values.
+    :rtype: tuple[str, set[str]]
+    Split a single role string.
     """
     regex = r"^([a-zA-Z0-9\-\_\:]+)(?:\[([a-zA-Z0-9\-\_,\.]*|\*)\])?$"
     matches = re.fullmatch(regex, role)
@@ -20,7 +23,11 @@ def split_role(role):
 
 
 def join_role(name, values):
-    """ Returns a role string in the format `name[value,value]` for given name and value list. """
+    """
+    :type values: set[str]
+    :type name: str
+    Returns a role string in the format "name[value,value]" for given name and values.
+    """
     if re.fullmatch(REGEX_ROLE_NAME, name) is None:
         raise ValueError('Invalid role name: `%s`' % name)
     for value in values:
@@ -34,7 +41,15 @@ def join_role(name, values):
 
 
 class Roles:
+    """ A class for managing access roles """
     def __init__(self, roles_str=None):
+        """
+        :param roles_str: A roles string with one ore more roles. E.g. "connect admin order[*]"
+        :returns: Roles object
+        :type roles_str: str
+        :rtype: Roles
+        Roles constructor
+        """
         self._roles = dict()
         if roles_str:
             self.set_roles_str(roles_str)
