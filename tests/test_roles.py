@@ -187,3 +187,19 @@ class TestRoles:
         assert roles_obj.get_role_values(ROLE_2_STR) == set()
         with pytest.raises(KeyError):
             roles_obj.del_role_value('fail', '*')
+
+    def test_merge_roles(self):
+        roles = Roles('r1 r2[*] r3[a,b] r4')
+        roles.merge_roles(Roles('r2[disappears] r3[b,c] r4[v1,v2] r5'))
+        assert str(roles) == 'r1 r2[*] r3[a,b,c] r4[v1,v2] r5'
+        roles.merge_roles(Roles('r3[*] r1[a]'))
+        assert str(roles) == 'r1[a] r2[*] r3[*] r4[v1,v2] r5'
+        with pytest.raises(TypeError):
+            roles.merge_roles('r3[*] r1[a]')
+
+    def test_remove_roles(self):
+        roles = Roles('r1 r2[*] r3[a,b] r4[v1,v2] r5 r6[d,e] r7 r8[y,z] r9[*]')
+        roles.remove_roles(Roles('r2[disappears] r3[b,c] r4[v1] r5 r6 r8[*] r9'))
+        assert str(roles) == 'r1 r2[*] r3[a] r4[v2] r7 r8'
+        with pytest.raises(TypeError):
+            roles.remove_roles('r3[*] r1[a]')

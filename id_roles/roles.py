@@ -114,16 +114,25 @@ class Roles:
         raise ValueError('Invalid operator value')
 
     def merge_roles(self, roles):
+        if not isinstance(roles, Roles):
+            raise TypeError('Roles type expected')
         for key, values in roles._roles.items():
             if key in self._roles:
                 self._roles[key] |= values
+                if '*' in self._roles[key]:
+                    self._roles[key] = {'*'}
             else:
                 self._roles[key] = values
 
     def remove_roles(self, roles):
+        if not isinstance(roles, Roles):
+            raise TypeError('Roles type expected')
         for key, values in roles._roles.items():
             if key in self._roles:
                 if len(values):
-                    self._roles[key] -= values
+                    if '*' in values:
+                        self._roles[key] = set()
+                    else:
+                        self._roles[key] -= values
                 else:
                     del self._roles[key]

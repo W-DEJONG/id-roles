@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="id-roles",
-    version="0.0.4",
+    version="0.0.5",
     author="Wouter de Jong",
     author_email="author@example.com",
     description="Id-manager roles package",
