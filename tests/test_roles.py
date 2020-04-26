@@ -203,3 +203,17 @@ class TestRoles:
         assert str(roles) == 'r1 r2[*] r3[a] r4[v2] r7 r8'
         with pytest.raises(TypeError):
             roles.remove_roles('r3[*] r1[a]')
+
+    def test_validate_roles(self, roles_obj):
+        assert roles_obj.validate_roles(roles_obj)
+        assert roles_obj.validate_roles(Roles(''))
+        assert roles_obj.validate_roles(Roles('role_2'))
+        assert not roles_obj.validate_roles(Roles('role_2 fail'))
+        assert roles_obj.validate_roles(Roles('role_2 fail'), match_all=False)
+        assert roles_obj.validate_roles(Roles('role_1:sub-role_1[v1]'))
+        assert not roles_obj.validate_roles(Roles('role_1:sub-role_1[v3]'))
+        assert not roles_obj.validate_roles(Roles('role_1:sub-role_1[*]'))
+        assert roles_obj.validate_roles(Roles('role_1:sub-role_1[*] role_3'), match_all=False)
+        assert not roles_obj.validate_roles(Roles('role_1:sub-role_1[*] role_3'), match_all=True)
+        assert roles_obj.validate_roles(Roles('role_2[value]'))
+        assert roles_obj.validate_roles(Roles('role_2[*] role_3'))

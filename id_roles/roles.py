@@ -10,6 +10,7 @@ def split_role(role):
     :type role: str
     :returns: tuple with role name and a set of values.
     :rtype: tuple[str, set[str]]
+
     Split a single role string.
     """
     regex = r"^([a-zA-Z0-9\-\_\:]+)(?:\[([a-zA-Z0-9\-\_,\.]*|\*)\])?$"
@@ -24,9 +25,12 @@ def split_role(role):
 
 def join_role(name, values):
     """
-    :type values: set[str]
+    :param name: A valid role name.
     :type name: str
-    Returns a role string in the format "name[value,value]" for given name and values.
+    :param values: A set of valid role values. (May be empty set)
+    :type values: set[str]
+
+    Returns a role string in the format: ``"name[value1,value2]"``.
     """
     if re.fullmatch(REGEX_ROLE_NAME, name) is None:
         raise ValueError('Invalid role name: `%s`' % name)
@@ -41,7 +45,10 @@ def join_role(name, values):
 
 
 class Roles:
-    """ A class for managing access roles """
+    """
+    A class for managing access roles
+    """
+
     def __init__(self, roles_str=None):
         """
         :param roles_str: A roles string with one ore more roles. E.g. "connect admin order[*]"
@@ -63,16 +70,36 @@ class Roles:
     def __contains__(self, item):
         return self.has_role(item)
 
+    def __bool__(self):
+        return len(self._roles) > 0
+
     def set_roles_str(self, roles_str):
+        """
+        :param roles_str: A roles string with one ore more roles.
+        :type roles_str: object
+        initialize Roles object with roles string
+        """
         for role in roles_str.split():
             if role != '':
                 name, values = split_role(role)
                 self._roles[name] = values
 
     def get_roles_str(self):
+        """
+        :returns: A roles string.
+        :rtype: str
+        """
         return ' '.join([join_role(n, v) for n, v in sorted(self._roles.items())])
 
     def has_role(self, name):
+        """
+        :param name: Role name
+        :type name: str
+        :rtype: bool
+        :returns: `True` if the Roles object contains role `name`.
+
+        Checks if roles object contains given role.
+        """
         return name in self._roles
 
     def get_roles(self):
@@ -115,20 +142,45 @@ class Roles:
         else:
             self._roles[role].discard(value)
 
-    def validate_roles(self, roles_str, operator='AND'):
-        resource_roles = set(self._roles.keys())
-        if not resource_roles:
+    def validate_roles(self, guard_roles, match_all=True):
+        """
+        :param guard_roles: Roles that must be satisfied.
+        :type guard_roles: Roles
+        :param match_all: Determines if all roles must be satisfied or only one role.
+        :type match_all: bool
+        :rtype: bool
+
+        Checks if roles in `self` match the guard roles.
+        """
+        if not guard_roles:
             return True
-        user_roles = set(roles_str.strip().split())
-        if operator == 'AND':
-            return resource_roles.issuperset(user_roles)
-        if operator == 'OR':
-            return bool(user_roles & resource_roles)
-        if callable(operator):
-            return operator(user_roles, resource_roles)
-        raise ValueError('Invalid operator value')
+
+        for (key, values) in guard_roles._roles.items():
+            if key in self._roles:
+                valid = True
+                if values:
+                    if '*' in self._roles[key]:
+                        valid = True
+                    elif match_all:
+                        valid = self._roles[key].issuperset(values)
+                    else:
+                        valid = bool(values & self._roles[key])
+            else:
+                valid = False
+            if valid and not match_all:
+                return True
+            if not valid and match_all:
+                return False
+        return valid
 
     def merge_roles(self, roles):
+        """
+        :param roles: Roles object to merge.
+        :type roles: Roles
+        :rtype: None
+
+        Merge `self` with Roles object `roles`.
+        """
         if not isinstance(roles, Roles):
             raise TypeError('Roles type expected')
         for key, values in roles._roles.items():
@@ -140,6 +192,13 @@ class Roles:
                 self._roles[key] = values
 
     def remove_roles(self, roles):
+        """
+        :param roles: Roles object with roles to remove.
+        :type roles: Roles
+        :rtype: None
+
+        Removes keys and values from `self`.
+        """
         if not isinstance(roles, Roles):
             raise TypeError('Roles type expected')
         for key, values in roles._roles.items():

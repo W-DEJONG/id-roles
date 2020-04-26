@@ -1,6 +1,6 @@
 # id-roles
 Id-manager roles library   
-Simple library for managing access roles. Inspired bij OAUTH scopes.
+Simple library for managing access roles. Inspired bij OAUTH2 scopes.
 
 ## Installation
 
